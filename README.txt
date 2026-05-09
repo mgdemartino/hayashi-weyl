@@ -3,7 +3,7 @@
 # ===================================================
 #
 # Version: 1.0.0
-# Authors: Marcelo De Martino 
+# Author: Marcelo De Martino 
 # Code co-created with Claude (Anthropic)
 # Copyright (c) 2026 Marcelo De Martino
 #
