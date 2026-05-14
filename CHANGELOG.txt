@@ -1,0 +1,14 @@
+# Changelog
+
+## [1.1.0] - 2026-05-14
+### Added
+- `tw_comm` method in `HayashiAlgebra` for twisted commutators
+- `__pow__` method in `HayashiElement` for symbolic exponents on g elements
+
+### Changed
+- Modified `_multiply_monomials` to handle symbolic g exponents
+
+## [1.0.0] - 2026-05-09
+- Initial release
+
+

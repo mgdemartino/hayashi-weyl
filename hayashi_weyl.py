@@ -24,6 +24,9 @@ From these relations one derives:
 Using (1) and (2), we assume the numbers a1, ..., an, b1, ..., bn, satisfy aj * bj = 0.
 """
 
+__version__ = "1.1.0"
+# See CHANGELOG.txt for version history
+
 from sympy import Symbol, expand, simplify, latex, S, together
 from collections import defaultdict
 
@@ -101,6 +104,20 @@ class HayashiAlgebra:
             reduce: if True (default), apply full_reduce to get true PBW basis
         """
         result = A * B - B * A
+        return self.full_reduce(result).simplify() if reduce else result.simplify()
+
+    def tw_comm(self, A, B, u=None, reduce=True):
+        """
+        Twisted commutator [A, B]_u = A*B -u*B*A.
+    
+        Args:
+            A, B: HayashiElement objects
+            u: an element in QQ(q); typically a power of q; default is u = q
+            reduce: if True (default), apply full_reduce to get true PBW basis
+        """
+        if u is None:
+            u = self.q
+        result = A * B - u * B * A
         return self.full_reduce(result).simplify() if reduce else result.simplify()
 
     def anticomm(self, A, B, reduce=True):
@@ -318,23 +335,46 @@ class HayashiElement:
                 product = self._multiply_monomials(mon1, mon2, expand(coef1 * coef2))
                 result = result + product
         return result
-    
+
+    def __pow__(self,exp):
+        """
+        Raise HayashiElement to a power.
+        Symbolic exponents allowed only for pure g elements.
+        """
+
+        from sympy import S
+
+        # Single monomial case
+        if len(self.terms) == 1:
+            key = list(self.terms.keys())[0]
+            coeff = list(self.terms.values())[0]
+            n = self.algebra.n
+
+            a_exp = list(key[:n])    # x exponents
+            b_exp = list(key[n:2*n]) # dx exponents
+            e_exp = list(key[2*n:])  # g exponents
+
+            # Pure g element check
+            if all(x == 0 for x in a_exp) and all(x == 0 for x in b_exp):
+                new_e_exp = [e * exp for e in e_exp]
+                new_coeff = coeff ** exp
+                new_key = tuple(a_exp + b_exp + new_e_exp)
+                return HayashiElement(self.algebra, {new_key: new_coeff})
+
+        # Fallback: integer exponents only
+        if not isinstance(exp, int) or exp < 0:
+            raise ValueError("Only non-negative integer powers for non-g elements")
+
+        result = self.algebra.one
+        for _ in range(exp):
+            result = result * self
+        return result
+
     def __truediv__(self, scalar):
         if isinstance(scalar, HayashiElement):
             raise TypeError("Cannot divide by a HayashiElement")
         return HayashiElement(self.algebra, {mon: expand(coef / scalar) 
                                              for mon, coef in self.terms.items()})
-    
-    def __pow__(self, p):
-        if not isinstance(p, int) or p < 0:
-            raise ValueError("Power must be a non-negative integer")
-        if p == 0:
-            return self.algebra.one
-        result = self.copy()
-        for _ in range(p - 1):
-            result = result * self
-        return result
-    
     def _multiply_monomials(self, mon1, mon2, coef):
         """Multiply two monomials, return in PBW form."""
         n = self.n
@@ -354,7 +394,8 @@ class HayashiElement:
         coef = expand(coef * self.q**q_power)
         
         # Combine g exponents
-        new_e = [e1[i] + e2[i] for i in range(n)]
+        # new_e = [e1[i] + e2[i] for i in range(n)] (line in v1.0.0)
+        new_e = [simplify(e1[i] + e2[i]) for i in range(n)]
         
         # Step 2: Reduce dx^{b1} * x^{a2}
         return self._reduce_dx_x(a1, b1, a2, b2, new_e, coef)
