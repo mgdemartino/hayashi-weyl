@@ -2,7 +2,7 @@
 # Hayashi Quantized Weyl Algebra
 # ===================================================
 #
-# Version: 1.0.0 (May 2026)
+# Version: See CHANGELOG.txt
 # Author: Marcelo De Martino 
 # Code co-created with Claude (Anthropic)
 # Copyright (c) 2026 Marcelo De Martino
